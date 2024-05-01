@@ -50,10 +50,8 @@ const router = createRouter({
 router.beforeEach((to, from) => {
   document.title = (to.meta.title as string) || "Bazaar Buzz";
 
-  console.log("auth:", to.meta.requiresAuth !== false);
   // Check if route requires auth
   if (to.meta.requiresAuth !== false) {
-    console.log("login:", !bzr.isLoggedIn());
     if (!bzr.isLoggedIn()) {
       return { name: "home", query: { redirect: to.name as string } };
     }

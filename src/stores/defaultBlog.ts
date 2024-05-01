@@ -41,7 +41,6 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
         return;
       }
       post.ts = new Date();
-      console.log("got post", post);
       await defaultBlogC.insertOne(post);
     } catch (err) {
       console.log("Cannot post to default blog:", err);

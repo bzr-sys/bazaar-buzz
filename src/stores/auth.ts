@@ -12,7 +12,6 @@ export const useAuthStore = defineStore("auth", () => {
   const user = ref({} as User);
 
   async function autoSignIn() {
-    console.log("autosignin:", bzr.isLoggedIn());
     if (bzr.isLoggedIn()) {
       try {
         user.value = await bzr.social.getUser();

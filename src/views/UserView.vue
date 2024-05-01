@@ -17,39 +17,40 @@ const authStore = useAuthStore();
 const subscriptionsStore = useSubscriptionsStore();
 
 const user = ref({} as User);
-bzr.social.getUser(handle).then((u) => {
-  console.log(u);
-  user.value = u;
-});
-
 const userBlog = ref([] as any[]);
 const isUser = ref(false);
-bzr
-  .collection(DEFAULT_BLOG_COLLECTION_NAME, { userId: handle })
-  .getAll({}, { orderBy: { ts: OrderByType.DESC } })
-  .then((blog) => {
-    userBlog.value = blog;
-    isUser.value = true;
-  })
-  .catch((err) => {
-    console.log(err);
-    if (err instanceof BazaarError) {
-      if (err.type === ErrorTypes.DatabaseDoesNotExist) {
-        userBlog.value = [
-          {
-            text: "User does not use bazaar buzz",
-            ts: new Date(),
-          },
-        ];
+
+bzr.social.getUser({ handle: handle }).then((u) => {
+  user.value = u;
+
+  //
+  bzr
+    .collection(DEFAULT_BLOG_COLLECTION_NAME, { userId: u.id })
+    .getAll({}, { orderBy: { ts: OrderByType.DESC } })
+    .then((blog) => {
+      userBlog.value = blog;
+      isUser.value = true;
+    })
+    .catch((err) => {
+      console.log(err);
+      if (err instanceof BazaarError) {
+        if (err.type === ErrorTypes.DatabaseDoesNotExist) {
+          userBlog.value = [
+            {
+              text: "User does not use bazaar buzz",
+              ts: new Date(),
+            },
+          ];
+        }
       }
-    }
-    userBlog.value = [
-      {
-        text: "An error occurred",
-        ts: new Date(),
-      },
-    ];
-  });
+      userBlog.value = [
+        {
+          text: "An error occurred",
+          ts: new Date(),
+        },
+      ];
+    });
+});
 </script>
 
 <template>
@@ -57,7 +58,7 @@ bzr
   <div class="p-4 max-w-2xl m-auto">
     <div v-if="user.id">
       <p class="text-lg">{{ user.name }}</p>
-      <p class="text-sm">{{ user.handle }}</p>
+      <p class="text-sm">@{{ user.handle }}</p>
       <div v-if="!isUser">
         <p class="pt-5 italic">
           This user does not use Bazaar Buzz (TODO: invite)

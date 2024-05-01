@@ -19,7 +19,6 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   const blogUnsubscribe = {} as { [key: string]: any };
 
   const feed = computed(() => {
-    console.log("execute feed computed");
     const feed = [];
     for (const userId in blogData.value) {
       const posts = blogData.value[userId].map((p: any) => {
@@ -35,15 +34,12 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   });
 
   async function fetchBlogData(subscription: any): Promise<void> {
-    console.log("fetch blog", subscription);
     const userId = subscription.id;
-    console.log("fetch user");
-    subscriptionsMap.value[userId] = await bzr.social.getUser(userId);
-
-    console.log("fetch blog data from", userId);
+    subscriptionsMap.value[userId] = await bzr.social.getUser({
+      userId: userId,
+    });
 
     if (blogUnsubscribe[userId]) {
-      console.log("cannot fetch if subscribed");
       return;
     }
 
@@ -60,12 +56,8 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   }
 
   async function deleteBlogData(subscription: any): Promise<void> {
-    console.log("delete blog", subscription);
     const userId = subscription.id;
-    console.log("fetch user");
     delete subscriptionsMap.value[userId];
-
-    console.log("fetch blog data from", userId);
 
     if (blogUnsubscribe[userId]) {
       blogUnsubscribe[userId]();
@@ -90,7 +82,6 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   }
 
   async function subscribe(userId: string) {
-    console.log("Subscribe to", userId);
     try {
       await subscriptionsC.insertOne({ id: userId }); // make sure we cannot subscribe twice to same blog
     } catch (err) {
@@ -99,7 +90,6 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   }
 
   async function unsubscribe(userId: string) {
-    console.log("Unsubscribe from", userId);
     try {
       await subscriptionsC.deleteOne(userId);
     } catch (err) {

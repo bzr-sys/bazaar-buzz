@@ -21,7 +21,7 @@ bzr.onLogin(async () => {
       </RouterLink>
       <div v-if="authStore.user.id" class="text-center w-1/3">
         <p class="text-lg">{{ authStore.user.name }}</p>
-        <p class="text-xs">{{ authStore.user.handle }}</p>
+        <p class="text-xs">@{{ authStore.user.handle }}</p>
       </div>
       <div class="w-1/3 text-right">
         <button

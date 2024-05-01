@@ -8,7 +8,6 @@ const defaultBlogStore = useDefaultBlogStore();
 const blogPost = ref("");
 const postingBlog = ref(false);
 function postToPubBlog() {
-  console.log("posting: ", blogPost.value);
   if (!blogPost.value) {
     return;
   }

@@ -6,13 +6,15 @@ import { bzr } from "@/bazaar";
 
 const subscriptionsStore = useSubscriptionsStore();
 
-console.log(subscriptionsStore.subscriptionsMap);
-
 const router = useRouter();
 
 async function openProfile(userId: string) {
-  // const user = await bzr.social.getUser(userId);
-  router.push({ name: "user", params: { handle: userId } }); // use user.handle. userId is just a temp fix
+  const user = await bzr.social.getUser({ userId: userId });
+  gotoProfile(user.handle);
+}
+
+function gotoProfile(handle: string) {
+  router.push({ name: "user", params: { handle: handle } });
 }
 </script>
 
@@ -34,14 +36,14 @@ async function openProfile(userId: string) {
 
     <div>
       <button
-        @click="openProfile(userId)"
+        @click="gotoProfile(user.handle)"
         class="border-2 border-amber-500 bg-amber-500 px-4 py-2 text-white font-semibold text-sm"
         data-size="small"
       >
         View
       </button>
       <button
-        @click="subscriptionsStore.unsubscribe(userId)"
+        @click="subscriptionsStore.unsubscribe(userId as string)"
         class="p-2 ml-2 bg-neutral-500 border-2 border-amber-500 text-white text-sm"
         data-size="small"
       >
