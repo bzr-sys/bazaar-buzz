@@ -1,12 +1,13 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 
-import { bzr, mirrorAll } from "@/bazaar";
+import { bzr } from "@/bazaar";
 import {
   PermissionType,
-  type BazaarMessage,
   BazaarError,
   ErrorTypes,
+  GranteeType,
+  arrayMirrorSubscribeListener,
 } from "@bzr/bazaar";
 
 export const DEFAULT_BLOG_COLLECTION_NAME = "default_blog";
@@ -21,17 +22,20 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
     onCreate: async () => {
       await bzr.permissions.create({
         collectionName: DEFAULT_BLOG_COLLECTION_NAME,
-        userId: "*",
+        granteeType: GranteeType.ANY,
         types: [PermissionType.READ],
       });
     },
   });
-  let defaultBlogU = undefined as (() => Promise<BazaarMessage>) | undefined;
+  let defaultBlogU = undefined as (() => Promise<string>) | undefined;
 
   async function sync(): Promise<void> {
     if (!defaultBlogU) {
       defaultBlog.value = [];
-      defaultBlogU = await mirrorAll({}, defaultBlogC, defaultBlog.value);
+      defaultBlogU = await defaultBlogC.subscribeAll(
+        {},
+        arrayMirrorSubscribeListener(defaultBlog.value),
+      );
     }
   }
 
@@ -49,9 +53,8 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
 
   async function getDefaultBlog(userId: string) {
     try {
-      return await bzr
-        .collection(DEFAULT_BLOG_COLLECTION_NAME, { userId: userId })
-        .getAll();
+      const ctx = await bzr.createContext({ ownerId: userId });
+      return await ctx.collection(DEFAULT_BLOG_COLLECTION_NAME).getAll();
     } catch (err) {
       if (err instanceof BazaarError) {
         if (err.type === ErrorTypes.DatabaseDoesNotExist) {

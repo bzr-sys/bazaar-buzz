@@ -20,12 +20,12 @@ const user = ref({} as User);
 const userBlog = ref([] as any[]);
 const isUser = ref(false);
 
-bzr.social.getUser({ handle: handle }).then((u) => {
+bzr.social.getUser({ handle: handle }).then(async (u) => {
   user.value = u;
 
-  //
-  bzr
-    .collection(DEFAULT_BLOG_COLLECTION_NAME, { userId: u.id })
+  const ctx = await bzr.createContext({ ownerId: u.id });
+  ctx
+    .collection(DEFAULT_BLOG_COLLECTION_NAME)
     .getAll({}, { orderBy: { ts: OrderByType.DESC } })
     .then((blog) => {
       userBlog.value = blog;

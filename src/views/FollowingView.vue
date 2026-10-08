@@ -20,7 +20,7 @@ function gotoProfile(handle: string) {
 
 <template>
   <button
-    @click="bzr.social.openModal(openProfile)"
+    @click="bzr.social.openPopup(openProfile)"
     class="p-3 my-2 bg-neutral-500 border-2 border-amber-500 text-white"
     data-size="small"
   >

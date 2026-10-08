@@ -1,8 +1,11 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import type { BazaarMessage, User } from "@bzr/bazaar";
+import {
+  arrayMirrorSubscribeListener,
+  type User,
+} from "@bzr/bazaar";
 
-import { bzr, mirrorAll } from "@/bazaar";
+import { bzr } from "@/bazaar";
 import { DEFAULT_BLOG_COLLECTION_NAME } from "./defaultBlog";
 
 const SUBSCRIPTIONS_COLLECTION_NAME = "subscriptions";
@@ -11,7 +14,7 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   // subscriptions
   const subscriptions = ref([] as any[]);
   const subscriptionsC = bzr.collection(SUBSCRIPTIONS_COLLECTION_NAME);
-  let subscriptionsU = undefined as (() => Promise<BazaarMessage>) | undefined;
+  let subscriptionsU = undefined as (() => Promise<string>) | undefined;
 
   const subscriptionsMap = ref({} as { [key: string]: User });
 
@@ -43,15 +46,12 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
       return;
     }
 
-    const blogC = bzr.collection(DEFAULT_BLOG_COLLECTION_NAME, {
-      userId: userId,
-    });
+    const ctx = await bzr.createContext({ ownerId: userId });
+    const blogC = ctx.collection(DEFAULT_BLOG_COLLECTION_NAME);
     blogData.value[userId] = [];
-    blogUnsubscribe[userId] = await mirrorAll(
-      // TODO we should probably not get the whole blog
+    blogUnsubscribe[userId] = await blogC.subscribeAll(
       {},
-      blogC,
-      blogData.value[userId],
+      arrayMirrorSubscribeListener(blogData.value[userId]),
     );
   }
 
@@ -69,14 +69,13 @@ export const useSubscriptionsStore = defineStore("subscriptions", () => {
   async function sync(): Promise<void> {
     if (!subscriptionsU) {
       subscriptions.value = [];
-      subscriptionsU = await mirrorAll(
+      subscriptionsU = await subscriptionsC.subscribeAll(
         {},
-        subscriptionsC,
-        subscriptions.value,
-        {
+        arrayMirrorSubscribeListener(subscriptions.value, {
+          onInitial: fetchBlogData,
           onAdd: fetchBlogData,
           onDelete: deleteBlogData,
-        },
+        }),
       );
     }
   }
