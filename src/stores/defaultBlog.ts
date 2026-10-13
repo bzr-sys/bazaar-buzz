@@ -4,21 +4,37 @@ import { defineStore } from "pinia";
 import { bzr } from "@/bazaar";
 import {
   PermissionType,
+  GranteeType,
+  OrderByType,
+  arrayMirrorSubscribeListener,
+  isUserDoesNotExistError,
   BazaarError,
   ErrorTypes,
-  GranteeType,
-  arrayMirrorSubscribeListener,
 } from "@bzr/bazaar";
+import type { Post } from "@/types";
+import { toDate } from "@/utils/time";
 
 export const DEFAULT_BLOG_COLLECTION_NAME = "default_blog";
 
+export function newestFirst<T extends Pick<Post, "ts">>(a: T, b: T) {
+  return toDate(b.ts).getTime() - toDate(a.ts).getTime();
+}
+
+/** Result of reading someone else's posts. */
+export type BlogResult =
+  | { status: "ok"; posts: Post[] }
+  | { status: "not-on-buzz" }
+  | { status: "not-found" }
+  | { status: "error" };
+
 export const useDefaultBlogStore = defineStore("defaultBlog", () => {
-  // public blogs
-  const defaultBlog = ref([] as any[]);
-  const sortedDefaultBlog = computed(() => {
-    return defaultBlog.value.slice().reverse();
-  });
-  const defaultBlogC = bzr.collection(DEFAULT_BLOG_COLLECTION_NAME, {
+  // Your own public posts
+  const defaultBlog = ref([] as Post[]);
+  const sortedDefaultBlog = computed(() =>
+    defaultBlog.value.slice().sort(newestFirst),
+  );
+
+  const defaultBlogC = bzr.collection<Post>(DEFAULT_BLOG_COLLECTION_NAME, {
     onCreate: async () => {
       await bzr.permissions.create({
         collectionName: DEFAULT_BLOG_COLLECTION_NAME,
@@ -39,39 +55,48 @@ export const useDefaultBlogStore = defineStore("defaultBlog", () => {
     }
   }
 
-  async function postDefaultBlog(post: { text: string; ts?: Date }) {
+  /** Posts to your public blog. Returns false if it failed. */
+  async function postDefaultBlog(text: string): Promise<boolean> {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return false;
+    }
     try {
-      if (!post.text) {
-        return;
-      }
-      post.ts = new Date();
-      await defaultBlogC.insertOne(post);
+      await defaultBlogC.insertOne({ text: trimmed, ts: new Date() });
+      return true;
     } catch (err) {
       console.log("Cannot post to default blog:", err);
+      return false;
     }
   }
 
-  async function getDefaultBlog(userId: string) {
+  /** Reads another user's public posts, newest first. */
+  async function getDefaultBlog(userId: string): Promise<BlogResult> {
     try {
       const ctx = await bzr.createContext({ ownerId: userId });
-      return await ctx.collection(DEFAULT_BLOG_COLLECTION_NAME).getAll();
+      const posts = await ctx
+        .collection<Post>(DEFAULT_BLOG_COLLECTION_NAME)
+        .getAll({}, { orderBy: { ts: OrderByType.DESC } });
+      return { status: "ok", posts };
     } catch (err) {
-      if (err instanceof BazaarError) {
-        if (err.type === ErrorTypes.DatabaseDoesNotExist) {
-          return [
-            {
-              text: "User does not use bazaar buzz",
-              ts: new Date(),
-            },
-          ];
-        }
+      if (
+        err instanceof BazaarError &&
+        err.type === ErrorTypes.DatabaseDoesNotExist
+      ) {
+        return { status: "not-on-buzz" };
       }
-      return [
-        {
-          text: "An error occurred",
-          ts: new Date(),
-        },
-      ];
+      if (
+        err instanceof BazaarError &&
+        err.type === ErrorTypes.CollectionDoesNotExist
+      ) {
+        // Opened Buzz but never posted
+        return { status: "ok", posts: [] };
+      }
+      if (isUserDoesNotExistError(err)) {
+        return { status: "not-found" };
+      }
+      console.log("Cannot read blog:", err);
+      return { status: "error" };
     }
   }
 

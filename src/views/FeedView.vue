@@ -15,7 +15,7 @@ const subscriptionsStore = useSubscriptionsStore();
       <div class="pt-2">
         {{ p.text }}
       </div>
-      <div class="text-sm text-neutral-500">by {{ p.user }}</div>
+      <div class="text-sm text-neutral-500">by {{ p.author.name }}</div>
     </div>
   </div>
   <div v-else class="bg-neutral-200 p-3 my-2">

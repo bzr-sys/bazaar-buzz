@@ -12,7 +12,7 @@ function postToPubBlog() {
     return;
   }
   postingBlog.value = true;
-  defaultBlogStore.postDefaultBlog({ text: blogPost.value }).then(() => {
+  defaultBlogStore.postDefaultBlog(blogPost.value).then(() => {
     blogPost.value = "";
     postingBlog.value = false;
   });
