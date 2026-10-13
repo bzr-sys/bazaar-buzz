@@ -1,5 +1,67 @@
-@import "./base.scss";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+// Theme colours as RGB triplets, used by the Tailwind colours in
+// tailwind.config.js. The dark theme follows the OS colour scheme.
+:root {
+  color-scheme: light;
+
+  --color-page: 244 245 247;
+  --color-surface: 255 255 255;
+  --color-subtle: 238 240 243;
+  --color-line: 227 230 235;
+  --color-line-strong: 207 212 219;
+  --color-ink: 21 23 26;
+  --color-body: 35 38 43;
+  --color-muted: 74 80 90;
+  --color-honey: 242 183 5;
+  --color-on-honey: 21 23 26;
+  --color-honey-text: 138 90 0;
+  --color-honey-soft: 255 248 220;
+  --color-honey-disabled: 246 227 166;
+  --color-on-honey-disabled: 107 100 80;
+  --color-inverse: 21 23 26;
+  --color-on-inverse: 255 255 255;
+  --color-danger: 155 44 31;
+  --color-danger-soft: 255 240 238;
+  --color-danger-line: 231 165 156;
+  --color-backdrop: 21 23 26;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-page: 18 20 23;
+    --color-surface: 27 30 34;
+    --color-subtle: 36 40 46;
+    --color-line: 42 46 52;
+    --color-line-strong: 74 80 90;
+    --color-ink: 238 240 243;
+    --color-body: 220 224 230;
+    --color-muted: 182 188 198;
+    --color-honey: 242 183 5;
+    --color-on-honey: 21 23 26;
+    --color-honey-text: 245 197 66;
+    --color-honey-soft: 51 42 14;
+    --color-honey-disabled: 74 65 32;
+    --color-on-honey-disabled: 196 186 150;
+    --color-inverse: 238 240 243;
+    --color-on-inverse: 21 23 26;
+    --color-danger: 255 170 160;
+    --color-danger-soft: 58 26 22;
+    --color-danger-line: 122 52 44;
+    --color-backdrop: 0 0 0;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-page font-sans text-ink antialiased;
+  }
+
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-honey-text;
+  }
+}
