@@ -13,3 +13,13 @@ export type FeedPost = Post & {
 };
 
 export type Person = Pick<User, "id" | "name" | "handle">;
+
+export type IconName =
+  | "home"
+  | "user"
+  | "users"
+  | "search"
+  | "plus"
+  | "globe"
+  | "arrow-up"
+  | "logout";

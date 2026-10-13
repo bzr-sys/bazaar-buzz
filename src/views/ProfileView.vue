@@ -1,51 +1,58 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed } from "vue";
 
+import { useAuthStore } from "@/stores/auth";
 import { useDefaultBlogStore } from "@/stores/defaultBlog";
+import { useSubscriptionsStore } from "@/stores/subscriptions";
+import EmptyState from "@/components/EmptyState.vue";
+import PostCard from "@/components/PostCard.vue";
+import PostComposer from "@/components/PostComposer.vue";
+import ProfileHeader from "@/components/ProfileHeader.vue";
 
+const authStore = useAuthStore();
 const defaultBlogStore = useDefaultBlogStore();
+const subscriptionsStore = useSubscriptionsStore();
 
-const blogPost = ref("");
-const postingBlog = ref(false);
-function postToPubBlog() {
-  if (!blogPost.value) {
-    return;
-  }
-  postingBlog.value = true;
-  defaultBlogStore.postDefaultBlog(blogPost.value).then(() => {
-    blogPost.value = "";
-    postingBlog.value = false;
-  });
-}
+const posts = computed(() => defaultBlogStore.sortedDefaultBlog);
+const summary = computed(() => {
+  const n = posts.value.length;
+  return `${n} ${n === 1 ? "post" : "posts"} · following ${subscriptionsStore.followCount}`;
+});
 </script>
 
 <template>
-  <div class="flex">
-    <textarea
-      rows="3"
-      v-model="blogPost"
-      placeholder="What's buzzing?"
-      class="w-full p-3 my-2 border-2"
-    ></textarea>
-    <button
-      @click="postToPubBlog"
-      class="p-3 my-2 bg-neutral-500 border-2 border-amber-500 text-white"
-      data-size="small"
-    >
-      post
-    </button>
-  </div>
+  <div class="flex flex-col gap-4 pb-4 md:py-7">
+    <ProfileHeader :user="authStore.user" :summary="summary" you>
+      <template #actions>
+        <RouterLink
+          :to="{ name: 'user', params: { handle: authStore.user.handle } }"
+          class="inline-flex min-h-10 items-center rounded-full border border-line-strong bg-surface px-4 text-[13px] font-bold hover:bg-subtle"
+        >
+          View public page
+        </RouterLink>
+      </template>
+    </ProfileHeader>
 
-  <div
-    v-for="p in defaultBlogStore.sortedDefaultBlog"
-    :key="p.id"
-    class="bg-neutral-200 p-3 my-2"
-  >
-    <div class="text-right text-xs text-neutral-500">at {{ p.ts }}</div>
-    <div class="pt-2">
-      {{ p.text }}
+    <div class="flex flex-col gap-4 px-3 md:px-0">
+      <div
+        class="rounded-2xl border border-line bg-surface p-4 shadow-sm focus-within:border-line-strong"
+      >
+        <PostComposer />
+      </div>
+
+      <EmptyState
+        v-if="posts.length === 0"
+        title="Say hello with your first post"
+        label="Profile"
+      >
+        It's public: anyone with a Bazaar login can read it on your profile.
+      </EmptyState>
+      <PostCard
+        v-for="post in posts"
+        :key="post.id"
+        :post="post"
+        :show-author="false"
+      />
     </div>
   </div>
 </template>
-
-<style scoped lang="scss"></style>
